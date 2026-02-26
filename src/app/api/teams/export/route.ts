@@ -4,6 +4,8 @@ import { divisions, groups, teams } from "@/lib/db/schema"
 import { eq, inArray } from "drizzle-orm"
 import * as XLSX from "xlsx"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url)

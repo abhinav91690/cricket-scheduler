@@ -8,6 +8,8 @@ const sqlite = new Database(dbPath)
 
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma("journal_mode = WAL")
+// Wait up to 5s if DB is locked by another process (e.g. dev server during build)
+sqlite.pragma("busy_timeout = 5000")
 // Enable foreign key enforcement
 sqlite.pragma("foreign_keys = ON")
 

@@ -3,6 +3,8 @@ import { db } from "@/lib/db/connection"
 import { divisions, groups, teams } from "@/lib/db/schema"
 import * as XLSX from "xlsx"
 
+export const dynamic = "force-dynamic"
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
