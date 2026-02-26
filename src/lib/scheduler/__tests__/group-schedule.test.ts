@@ -408,4 +408,132 @@ describe("generateGroupSchedule", () => {
     expect(dateCounts.get("2025-03-08")).toBe(2)
     expect(dateCounts.get("2025-03-15")).toBe(2)
   })
+
+  it("interleaves matches across divisions with different group sizes (cross-division fairness)", () => {
+    // Leather group: 4 teams (IDs 1-4) → 6 round-robin matches, each team plays 3
+    // Tape ball group: 3 teams (IDs 11-13) → 3 round-robin matches, each team plays 2
+    // 9 total matches across 5 weekends, separate grounds per format
+    // The scheduler should spread both formats evenly across the season
+    const leatherMatches = [
+      match(1, 2, 1, "leather"), match(1, 3, 1, "leather"), match(1, 4, 1, "leather"),
+      match(2, 3, 1, "leather"), match(2, 4, 1, "leather"), match(3, 4, 1, "leather"),
+    ]
+    const tapeMatches = [
+      match(11, 12, 2, "tape_ball"), match(11, 13, 2, "tape_ball"), match(12, 13, 2, "tape_ball"),
+    ]
+
+    const allSlots = [
+      // 5 weekends, 1 leather ground (id=1) + 1 tape ball ground (id=2)
+      slot(100, "2025-03-01", "leather", 1, "08:00"),
+      slot(101, "2025-03-01", "tape_ball", 2, "08:00"),
+      slot(102, "2025-03-08", "leather", 1, "08:00"),
+      slot(103, "2025-03-08", "tape_ball", 2, "08:00"),
+      slot(104, "2025-03-15", "leather", 1, "08:00"),
+      slot(105, "2025-03-15", "tape_ball", 2, "08:00"),
+      slot(106, "2025-03-22", "leather", 1, "08:00"),
+      slot(107, "2025-03-22", "tape_ball", 2, "08:00"),
+      slot(108, "2025-03-29", "leather", 1, "08:00"),
+      slot(109, "2025-03-29", "tape_ball", 2, "08:00"),
+      // Extra leather slots on later weekends (leather needs 6 slots, only 5 weekends)
+      slot(110, "2025-04-05", "leather", 1, "08:00"),
+    ]
+
+    const input: ScheduleInput = {
+      matches: [...leatherMatches, ...tapeMatches],
+      slots: allSlots,
+      conflicts: [],
+      blackouts: [],
+      existingSchedule: [],
+      divisionTeamIds: [1, 2, 3, 4, 11, 12, 13],
+    }
+
+    const result = generateGroupSchedule(input)
+    expect(result.scheduled).toHaveLength(9)
+    expect(result.unschedulable).toHaveLength(0)
+
+    // Tape ball matches (3 total) should be spread across at least 3 different dates
+    // (not clumped into the first 3 weekends while leather gets nothing early)
+    const tapeScheduled = result.scheduled.filter(
+      (m: ScheduledMatch) => m.teamAId >= 11 || m.teamBId >= 11
+    )
+    const tapeDates = new Set(
+      tapeScheduled.map((m: ScheduledMatch) => {
+        const s = allSlots.find((sl) => sl.id === m.timeSlotId)!
+        return s.date
+      })
+    )
+    expect(tapeDates.size).toBe(3) // 3 matches on 3 different weekends
+
+    // Leather matches should also be spread — no team should have all their matches
+    // in the first half of the season
+    const leatherScheduled = result.scheduled.filter(
+      (m: ScheduledMatch) => m.teamAId < 10 && m.teamBId < 10
+    )
+    const leatherDates = new Set(
+      leatherScheduled.map((m: ScheduledMatch) => {
+        const s = allSlots.find((sl) => sl.id === m.timeSlotId)!
+        return s.date
+      })
+    )
+    // 6 leather matches should use at least 5 different dates (spread across season)
+    expect(leatherDates.size).toBeGreaterThanOrEqual(5)
+  })
+
+  it("does not delay smaller-format groups until larger-format groups finish", () => {
+    // Simulates the real bug: leather group has 13 matches (large group),
+    // tape ball group has 3 matches (small group).
+    // Without interleaving, all 13 leather matches get scheduled first,
+    // pushing tape ball to start months later.
+    //
+    // Leather: teams 1-6 in one group, but we only need enough matches to show the bug
+    // We'll use 8 leather matches and 3 tape ball matches across 12 weekends
+    const leatherMatches = [
+      match(1, 2, 1, "leather"), match(1, 3, 1, "leather"),
+      match(1, 4, 1, "leather"), match(2, 3, 1, "leather"),
+      match(2, 4, 1, "leather"), match(3, 4, 1, "leather"),
+      match(1, 5, 1, "leather"), match(2, 5, 1, "leather"),
+    ]
+    const tapeMatches = [
+      match(11, 12, 2, "tape_ball"), match(11, 13, 2, "tape_ball"), match(12, 13, 2, "tape_ball"),
+    ]
+
+    // 12 weekends with 1 leather ground + 1 tape ball ground each
+    const allSlots: SlotRef[] = []
+    const dates = [
+      "2025-03-01", "2025-03-08", "2025-03-15", "2025-03-22",
+      "2025-03-29", "2025-04-05", "2025-04-12", "2025-04-19",
+      "2025-04-26", "2025-05-03", "2025-05-10", "2025-05-17",
+    ]
+    let slotId = 200
+    for (const d of dates) {
+      allSlots.push(slot(slotId++, d, "leather", 1, "08:00"))
+      allSlots.push(slot(slotId++, d, "tape_ball", 2, "08:00"))
+    }
+
+    const input: ScheduleInput = {
+      matches: [...leatherMatches, ...tapeMatches],
+      slots: allSlots,
+      conflicts: [],
+      blackouts: [],
+      existingSchedule: [],
+      divisionTeamIds: [1, 2, 3, 4, 5, 11, 12, 13],
+    }
+
+    const result = generateGroupSchedule(input)
+    expect(result.scheduled).toHaveLength(11)
+    expect(result.unschedulable).toHaveLength(0)
+
+    // The key assertion: tape ball matches should start in the FIRST HALF of the season
+    // (within the first 6 weekends), not be delayed until after leather finishes
+    const tapeScheduled = result.scheduled.filter(
+      (m: ScheduledMatch) => m.teamAId >= 11 || m.teamBId >= 11
+    )
+    const firstHalfDates = new Set(dates.slice(0, 6))
+    const tapeInFirstHalf = tapeScheduled.filter((m: ScheduledMatch) => {
+      const s = allSlots.find((sl) => sl.id === m.timeSlotId)!
+      return firstHalfDates.has(s.date)
+    })
+    // At least 1 tape ball match should be in the first half of the season
+    expect(tapeInFirstHalf.length).toBeGreaterThanOrEqual(1)
+  })
 })

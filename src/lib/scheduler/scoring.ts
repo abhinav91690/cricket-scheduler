@@ -11,6 +11,10 @@ export interface ScoreContext {
   teamGroundCounts: Map<number, Map<number, number>>
   /** team → startTime → count of matches at that time */
   teamTimeCounts: Map<number, Map<string, number>>
+  /** team → total scheduled match count (for round-robin fairness) */
+  teamTotalMatchCounts: Map<number, number>
+  /** team → total expected matches in their group (for ratio-based cross-division fairness) */
+  teamExpectedMatchCounts?: Map<number, number>
 }
 
 /**
@@ -38,6 +42,10 @@ export function getDayMatchCount(
  * Scores how good a time slot is for a match. Lower score = better.
  *
  * Penalty weights:
+ * - +50 per unit above the division minimum for each team (round-robin fairness)
+ *   When teamExpectedMatchCounts is provided, compares progress ratios (scheduled/expected)
+ *   instead of raw counts, so teams in different-sized groups are compared fairly.
+ *   Penalty = floor(excessRatio * 100) * 50 per team.
  * - +10 per existing match for each team on that day (date spread)
  * - +8  per existing match for each team on that ground (ground fairness)
  * - +8  per existing match for each team at that start time (time-of-day fairness)
@@ -49,6 +57,39 @@ export function scoreSlot(
   ctx: ScoreContext
 ): number {
   let score = 0
+
+  // Round-robin fairness penalty (+50 per unit above division minimum)
+  // When teamExpectedMatchCounts is provided, use progress ratios (scheduled/expected)
+  // to fairly compare teams with different group sizes. Otherwise fall back to raw counts.
+  if (ctx.teamTotalMatchCounts.size > 0) {
+    if (ctx.teamExpectedMatchCounts && ctx.teamExpectedMatchCounts.size > 0) {
+      // Ratio-based: compare scheduling progress as percentages
+      const ratios: number[] = []
+      for (const [teamId, scheduled] of ctx.teamTotalMatchCounts) {
+        const expected = ctx.teamExpectedMatchCounts.get(teamId) ?? 1
+        ratios.push(expected > 0 ? scheduled / expected : 0)
+      }
+      const minRatio = Math.min(...ratios)
+
+      const teamAExpected = ctx.teamExpectedMatchCounts.get(match.teamAId) ?? 1
+      const teamBExpected = ctx.teamExpectedMatchCounts.get(match.teamBId) ?? 1
+      const teamAScheduled = ctx.teamTotalMatchCounts.get(match.teamAId) ?? 0
+      const teamBScheduled = ctx.teamTotalMatchCounts.get(match.teamBId) ?? 0
+      const teamARatio = teamAExpected > 0 ? teamAScheduled / teamAExpected : 0
+      const teamBRatio = teamBExpected > 0 ? teamBScheduled / teamBExpected : 0
+
+      // Convert excess ratio to integer "percentage points" to keep penalty granular
+      score += Math.floor(Math.max(0, teamARatio - minRatio) * 100) * 50
+      score += Math.floor(Math.max(0, teamBRatio - minRatio) * 100) * 50
+    } else {
+      // Raw count fallback (backward compatible)
+      const minCount = Math.min(...ctx.teamTotalMatchCounts.values())
+      const teamATotal = ctx.teamTotalMatchCounts.get(match.teamAId) ?? 0
+      const teamBTotal = ctx.teamTotalMatchCounts.get(match.teamBId) ?? 0
+      score += Math.max(0, teamATotal - minCount) * 50
+      score += Math.max(0, teamBTotal - minCount) * 50
+    }
+  }
 
   // Date spread penalty (+10 per team per existing match on this date)
   const teamADayCount = ctx.teamDayCounts.get(match.teamAId)?.get(slot.date) ?? 0

@@ -111,6 +111,7 @@ export function generateKnockoutBracket(
       allSlots: slots,
       teamGroundCounts,
       teamTimeCounts,
+      teamTotalMatchCounts: new Map(),
     }
     const scored = candidates.map((s) => ({
       slot: s,

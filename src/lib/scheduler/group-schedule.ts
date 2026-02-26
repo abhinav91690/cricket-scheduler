@@ -56,6 +56,36 @@ function incrementNestedCount<K>(
   inner.set(key, (inner.get(key) ?? 0) + 1)
 }
 
+/**
+ * Picks the next match to schedule based on team progress ratios.
+ * Selects the match whose teams have the lowest average scheduling progress
+ * (scheduled / expected), ensuring cross-division fairness by interleaving
+ * matches from groups of different sizes.
+ */
+function pickNextMatch(
+  remaining: MatchRef[],
+  teamTotalMatchCounts: Map<number, number>,
+  teamExpectedMatchCounts: Map<number, number>
+): number {
+  let bestIdx = 0
+  let bestScore = Infinity
+
+  for (let i = 0; i < remaining.length; i++) {
+    const m = remaining[i]
+    const aScheduled = teamTotalMatchCounts.get(m.teamAId) ?? 0
+    const bScheduled = teamTotalMatchCounts.get(m.teamBId) ?? 0
+    const aExpected = teamExpectedMatchCounts.get(m.teamAId) ?? 1
+    const bExpected = teamExpectedMatchCounts.get(m.teamBId) ?? 1
+    const avgRatio = (aScheduled / aExpected + bScheduled / bExpected) / 2
+    if (avgRatio < bestScore) {
+      bestScore = avgRatio
+      bestIdx = i
+    }
+  }
+
+  return bestIdx
+}
+
 export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
   const { matches, slots, conflicts, blackouts, existingSchedule, divisionTeamIds, teamFormatMap } = input
 
@@ -87,6 +117,19 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
   const teamGroundCounts = new Map<number, Map<number, number>>()
   const teamTimeCounts = new Map<number, Map<string, number>>()
 
+  // 5. Build total match counts per team (for round-robin fairness)
+  const teamTotalMatchCounts = new Map<number, number>()
+  for (const teamId of divisionTeamIds) {
+    teamTotalMatchCounts.set(teamId, 0)
+  }
+
+  // Build expected match counts per team (how many matches each team has in the full round-robin)
+  const teamExpectedMatchCounts = new Map<number, number>()
+  for (const m of matches) {
+    teamExpectedMatchCounts.set(m.teamAId, (teamExpectedMatchCounts.get(m.teamAId) ?? 0) + 1)
+    teamExpectedMatchCounts.set(m.teamBId, (teamExpectedMatchCounts.get(m.teamBId) ?? 0) + 1)
+  }
+
   for (const em of existingSchedule) {
     const emSlot = slotMap.get(em.timeSlotId)
     if (!emSlot) continue
@@ -94,11 +137,15 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
       incrementNestedCount(teamDayCounts, teamId, emSlot.date)
       incrementNestedCount(teamGroundCounts, teamId, emSlot.groundId)
       incrementNestedCount(teamTimeCounts, teamId, emSlot.startTime)
+      teamTotalMatchCounts.set(teamId, (teamTotalMatchCounts.get(teamId) ?? 0) + 1)
     }
   }
 
-  // 5. For each match, find best slot
-  for (const match of sortedMatches) {
+  // 6. For each match, dynamically pick the one with lowest team progress ratio
+  const remaining = [...sortedMatches]
+  while (remaining.length > 0) {
+    const idx = pickNextMatch(remaining, teamTotalMatchCounts, teamExpectedMatchCounts)
+    const match = remaining.splice(idx, 1)[0]
     const candidates = slots
       .filter((s) => isFormatCompatible(s, match))
       .filter((s) => !isSlotOccupied(s.id, occupancy))
@@ -124,6 +171,8 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
       allSlots: slots,
       teamGroundCounts,
       teamTimeCounts,
+      teamTotalMatchCounts,
+      teamExpectedMatchCounts,
     }
 
     // Score remaining slots, pick lowest
@@ -173,6 +222,7 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
       incrementNestedCount(teamDayCounts, teamId, bestSlot.date)
       incrementNestedCount(teamGroundCounts, teamId, bestSlot.groundId)
       incrementNestedCount(teamTimeCounts, teamId, bestSlot.startTime)
+      teamTotalMatchCounts.set(teamId, (teamTotalMatchCounts.get(teamId) ?? 0) + 1)
     }
   }
 

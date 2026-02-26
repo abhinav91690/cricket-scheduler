@@ -58,7 +58,9 @@ The core scheduler lives in `src/lib/scheduler/` and is a pure-function pipeline
 
 1. **Sort by constraint difficulty** — matches involving teams with more conflicts are scheduled first (most-constrained-first heuristic), reducing the chance of painting yourself into a corner.
 
-2. **Filter candidate slots** — for each match, all time slots pass through a pipeline of constraint checks:
+2. **Dynamic match selection by progress ratio** — instead of processing matches in a fixed order, the scheduler dynamically picks the next match whose teams have the lowest average scheduling progress (`scheduled / expected`). This interleaves matches across groups and formats, preventing larger groups from monopolizing early slots while smaller groups wait.
+
+3. **Filter candidate slots** — for each match, all time slots pass through a pipeline of constraint checks:
    - `isFormatCompatible` — slot's ground format must match the match format
    - `isSlotOccupied` — each slot holds exactly one match
    - `isTeamAvailable` — neither team is already playing/umpiring in this slot
@@ -67,20 +69,21 @@ The core scheduler lives in `src/lib/scheduler/` and is a pure-function pipeline
    - `hasTeamPlayedThisWeekend` — each team plays at most once per weekend (Saturday + Sunday are grouped; weekdays are independent)
    - `isTeamBlackedOut` — neither team has a blackout on this date
 
-3. **Score remaining candidates** — slots that pass all constraints are scored. Lower score = better. The scoring function (`scoreSlot`) applies weighted penalties:
+4. **Score remaining candidates** — slots that pass all constraints are scored. Lower score = better. The scoring function (`scoreSlot`) applies weighted penalties:
+   - **+50** per unit above the division minimum for each team (round-robin fairness). When `teamExpectedMatchCounts` is provided, compares scheduling progress as ratios (`scheduled / expected`) instead of raw counts — this ensures teams in different-sized groups (e.g. a 6-team leather group vs a 4-team tape ball group) are compared fairly. Penalty = `floor(excessRatio × 100) × 50`. Falls back to raw count comparison when expected counts are not available.
    - **+10** per existing match for each team on that date (spreads games across the season)
    - **+8** per existing match for each team on that ground (distributes ground usage)
    - **+8** per existing match for each team at that start time (varies time-of-day)
    - **+1** per total match on that date (balances day load)
 
-4. **Assign umpire** — `selectUmpireTeam()` picks the best umpire from eligible teams:
+5. **Assign umpire** — `selectUmpireTeam()` picks the best umpire from eligible teams:
    - Must be the same format as the match (leather teams umpire leather, tape ball teams umpire tape ball)
    - Cannot be one of the playing teams
    - Cannot already be in the slot (playing or umpiring another match)
    - Cannot have a conflict with either playing team
    - Among eligible candidates, the team with the fewest umpire assignments is chosen (load balancing)
 
-5. **Update tracking state** — occupancy maps, umpire counts, and fairness counters are updated after each assignment.
+6. **Update tracking state** — occupancy maps, umpire counts, and fairness counters are updated after each assignment.
 
 Matches that cannot be placed in any slot are returned in the `unschedulable` array with a reason string.
 
@@ -198,7 +201,7 @@ src/
 - **UI**: React 19, Tailwind CSS v4, Radix UI primitives
 - **Database**: SQLite via better-sqlite3 (WAL mode, foreign keys enforced)
 - **ORM**: Drizzle ORM with drizzle-kit for migrations
-- **Testing**: Vitest (157 tests across 10 test files)
+- **Testing**: Vitest (167 tests across 10 test files)
 - **Export**: xlsx library for Excel import/export
 
 ## Database Commands
