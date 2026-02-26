@@ -21,18 +21,47 @@ npm run test:watch # watch mode
 
 ## Docker Deployment
 
-Build and run with Docker Compose:
+### Quick Start
 
 ```bash
+# Build and start (first time)
 docker compose up -d
+
+# App is now running at http://localhost:3000
 ```
 
-The app will be available at http://localhost:3000. Data is persisted in a Docker volume (`cricket-data`).
+Database migrations run automatically on container startup. Data is persisted in a Docker volume (`cricket-data`) so it survives container restarts.
 
-To rebuild after code changes:
+### Common Operations
 
 ```bash
+# Stop the app
+docker compose down
+
+# Restart (data is preserved)
+docker compose up -d
+
+# Rebuild after code changes
 docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Full reset (removes all data)
+docker compose down -v
+```
+
+### Without Docker Compose
+
+```bash
+# Build the image
+docker build -t cricket-scheduler .
+
+# Run with a named volume for persistence
+docker run -d -p 3000:3000 -v cricket-data:/data cricket-scheduler
+
+# Or bind-mount a local directory instead
+docker run -d -p 3000:3000 -v ./data:/data cricket-scheduler
 ```
 
 ### Environment Variables
@@ -41,15 +70,14 @@ docker compose up -d --build
 |----------|---------|-------------|
 | `DB_PATH` | `/data/sqlite.db` | Path to SQLite database file |
 
-### Manual Docker Commands
+### How It Works
 
-```bash
-# Build
-docker build -t cricket-scheduler .
+The Docker image uses a multi-stage build (Node.js 22):
+1. Stage 1 installs dependencies (including native `better-sqlite3` compilation)
+2. Stage 2 builds the Next.js standalone output
+3. Stage 3 is a slim runtime that copies only what's needed
 
-# Run with volume mount
-docker run -p 3000:3000 -v cricket-data:/data cricket-scheduler
-```
+On startup, `entrypoint.sh` runs `migrate.js` to apply any pending SQL migrations from `drizzle/`, then starts the Next.js server. The migration runner is idempotent — it tracks applied migrations in a `__drizzle_migrations` table and skips ones already applied.
 
 ## Data Model
 
