@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: wispy6970/cricket-scheduler
     ports:
       - "3000:3000"
     volumes:
