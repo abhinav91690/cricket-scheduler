@@ -1,0 +1,140 @@
+{
+  "divisions": [
+    {
+      "name": "Division 1",
+      "tier": 1,
+      "groups": [
+        {
+          "name": "D1 Leather",
+          "format": "leather",
+          "teams": [
+            "Austin Aces", "Dallas Dynamos", "Houston Hurricanes", "San Antonio Spartans",
+            "Fort Worth Falcons", "El Paso Eagles", "Plano Panthers", "Irving Invincibles",
+            "Frisco Flames", "Arlington Arrows", "Round Rock Riders", "Cedar Park Chargers",
+            "McKinney Mavericks"
+          ]
+        },
+        {
+          "name": "D1 Tape Ball A",
+          "format": "tape_ball",
+          "teams": [
+            "Austin Avengers", "Dallas Dragons", "Houston Hawks", "San Antonio Scorpions",
+            "Fort Worth Foxes", "El Paso Enforcers", "Plano Phantoms", "Irving Islanders",
+            "Frisco Fury", "Arlington Alphas"
+          ]
+        },
+        {
+          "name": "D1 Tape Ball B",
+          "format": "tape_ball",
+          "teams": [
+            "Garland Gladiators", "Mesquite Monarchs", "Denton Defenders", "Lewisville Legends",
+            "Carrollton Cavaliers", "Richardson Raptors", "Allen Aces", "Wylie Wolves",
+            "Prosper Pioneers", "Celina Centurions"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Division 2",
+      "tier": 2,
+      "groups": [
+        {
+          "name": "D2 Leather",
+          "format": "leather",
+          "teams": [
+            "Corpus Christi Cobras", "Laredo Lions", "Brownsville Blazers", "McAllen Mustangs",
+            "Killeen Knights", "Temple Titans", "Waco Warriors", "Tyler Thunderbolts",
+            "Longview Lancers", "Midland Miners", "Odessa Outlaws", "Lubbock Lynx",
+            "Amarillo Armadillos"
+          ]
+        },
+        {
+          "name": "D2 Tape Ball A",
+          "format": "tape_ball",
+          "teams": [
+            "Corpus Christi Comets", "Laredo Leopards", "Brownsville Bulls", "McAllen Marlins",
+            "Killeen Kestrels", "Temple Tornadoes", "Waco Wildcats", "Tyler Tridents",
+            "Longview Lightning", "Midland Mambas"
+          ]
+        },
+        {
+          "name": "D2 Tape Ball B",
+          "format": "tape_ball",
+          "teams": [
+            "Odessa Ospreys", "Lubbock Lancers", "Amarillo Aztecs", "Abilene Admirals",
+            "San Angelo Stallions", "Beaumont Barracudas", "Galveston Gators", "College Station Cougars",
+            "Bryan Braves", "Nacogdoches Navigators"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Division 3",
+      "tier": 3,
+      "groups": [
+        {
+          "name": "D3 Leather",
+          "format": "leather",
+          "teams": [
+            "Pflugerville Phoenix", "Georgetown Griffins", "New Braunfels Nomads", "Kyle Krakens",
+            "Buda Bulldogs", "Bastrop Bandits", "Lockhart Legends", "Seguin Sabres",
+            "Hutto Hornets", "Taylor Trojans", "Elgin Emperors", "Manor Monarchs",
+            "Dripping Springs Dragons"
+          ]
+        },
+        {
+          "name": "D3 Tape Ball A",
+          "format": "tape_ball",
+          "teams": [
+            "Pflugerville Pirates", "Georgetown Generals", "New Braunfels Nighthawks", "Kyle Koalas",
+            "Buda Bears", "Bastrop Bisons", "Lockhart Lynx", "Seguin Sharks",
+            "Hutto Herons", "Taylor Timberwolves"
+          ]
+        },
+        {
+          "name": "D3 Tape Ball B",
+          "format": "tape_ball",
+          "teams": [
+            "Elgin Explorers", "Manor Marlins", "Dripping Springs Dolphins", "Wimberley Wasps",
+            "Marble Falls Makos", "Burnet Bobcats", "Lampasas Leopards", "Copperas Cove Cyclones",
+            "Harker Heights Hawks", "Belton Bengals"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Division 4",
+      "tier": 4,
+      "groups": [
+        {
+          "name": "D4 Leather",
+          "format": "leather",
+          "teams": [
+            "Lakeway Legends", "Bee Cave Bolts", "Westlake Warriors", "Steiner Ranch Stallions",
+            "Leander Lightning", "Liberty Hill Lions", "Jarrell Jaguars", "Florence Falcons",
+            "Salado Scorpions", "Holland Hurricanes", "Rogers Rangers", "Granger Grizzlies",
+            "Thrall Thunder"
+          ]
+        },
+        {
+          "name": "D4 Tape Ball A",
+          "format": "tape_ball",
+          "teams": [
+            "Lakeway Lynx", "Bee Cave Barracudas", "Westlake Wolves", "Steiner Ranch Stingrays",
+            "Leander Leopards", "Liberty Hill Lancers", "Jarrell Jets", "Florence Firebirds",
+            "Salado Sabres", "Holland Hammerheads"
+          ]
+        },
+        {
+          "name": "D4 Tape Ball B",
+          "format": "tape_ball",
+          "teams": [
+            "Rogers Raptors", "Granger Gladiators", "Thrall Titans", "Bartlett Blazers",
+            "Cameron Coyotes", "Rockdale Rockets", "Thorndale Thunderhawks", "Lexington Legends",
+            "Giddings Griffins", "Smithville Spartans"
+          ]
+        }
+      ]
+    }
+  ]
+}
