@@ -37,10 +37,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/.next/standalone ./
 # Copy static assets
 COPY --from=builder /app/.next/static ./.next/static
-# Copy drizzle SQL migration files for runtime migration
-COPY --from=builder /app/drizzle ./drizzle
-# Copy migration runner
-COPY --from=builder /app/migrate.js ./migrate.js
+# Copy drizzle SQL migration files and migration runner directly from context
+COPY drizzle ./drizzle
+COPY migrate.js ./migrate.js
 
 USER nextjs
 
