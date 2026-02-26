@@ -41,6 +41,3 @@ next-env.d.ts
 # database
 sqlite.db
 sqlite.db-journal
-
-# drizzle
-/drizzle/
