@@ -2,7 +2,7 @@ import Database from "better-sqlite3"
 import { drizzle } from "drizzle-orm/better-sqlite3"
 import path from "path"
 
-const dbPath = path.join(process.cwd(), "sqlite.db")
+const dbPath = process.env.DB_PATH || path.join(process.cwd(), "sqlite.db")
 
 const sqlite = new Database(dbPath)
 

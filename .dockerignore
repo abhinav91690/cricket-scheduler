@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+sqlite.db
+sqlite.db-shm
+sqlite.db-wal
+*.md
+docs
+.vscode
+.kiro

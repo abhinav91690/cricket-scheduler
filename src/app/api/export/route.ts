@@ -94,7 +94,7 @@ export async function GET(request: Request) {
         })
       }
       const buffer = exportToExcel([])
-      return new Response(buffer, {
+      return new Response(new Uint8Array(buffer), {
         headers: {
           "Content-Type":
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -196,7 +196,7 @@ export async function GET(request: Request) {
 
     // Excel
     const buffer = exportToExcel(filtered)
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

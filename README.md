@@ -19,6 +19,38 @@ npm test           # single run
 npm run test:watch # watch mode
 ```
 
+## Docker Deployment
+
+Build and run with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+The app will be available at http://localhost:3000. Data is persisted in a Docker volume (`cricket-data`).
+
+To rebuild after code changes:
+
+```bash
+docker compose up -d --build
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_PATH` | `/data/sqlite.db` | Path to SQLite database file |
+
+### Manual Docker Commands
+
+```bash
+# Build
+docker build -t cricket-scheduler .
+
+# Run with volume mount
+docker run -p 3000:3000 -v cricket-data:/data cricket-scheduler
+```
+
 ## Data Model
 
 The application uses a hierarchical structure:

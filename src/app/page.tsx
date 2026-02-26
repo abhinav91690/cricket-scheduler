@@ -3,6 +3,8 @@ import { listTournaments } from "@/app/actions/tournament-actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
+export const dynamic = "force-dynamic"
+
 export default async function HomePage() {
   const { data: tournaments } = await listTournaments()
 
