@@ -15,6 +15,8 @@ export interface ScoreContext {
   teamTotalMatchCounts: Map<number, number>
   /** team → total expected matches in their group (for ratio-based cross-division fairness) */
   teamExpectedMatchCounts?: Map<number, number>
+  /** date → number of matches already scheduled on that date (O(1) day load lookup) */
+  dayMatchCounts?: Map<string, number>
 }
 
 /**
@@ -114,7 +116,10 @@ export function scoreSlot(
   }
 
   // Day load balancing (+1 per existing match on this date)
-  const dayLoad = getDayMatchCount(ctx.occupancy, ctx.allSlots, slot.date)
+  // Use pre-computed dayMatchCounts for O(1) lookup when available
+  const dayLoad = ctx.dayMatchCounts
+    ? (ctx.dayMatchCounts.get(slot.date) ?? 0)
+    : getDayMatchCount(ctx.occupancy, ctx.allSlots, slot.date)
   score += dayLoad
 
   return score

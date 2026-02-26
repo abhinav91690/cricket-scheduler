@@ -130,6 +130,15 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
     teamExpectedMatchCounts.set(m.teamBId, (teamExpectedMatchCounts.get(m.teamBId) ?? 0) + 1)
   }
 
+  // Build pre-computed day match counts from existing schedule (O(1) lookup in scoreSlot)
+  const dayMatchCounts = new Map<string, number>()
+  for (const em of existingSchedule) {
+    const emSlot = slotMap.get(em.timeSlotId)
+    if (emSlot) {
+      dayMatchCounts.set(emSlot.date, (dayMatchCounts.get(emSlot.date) ?? 0) + 1)
+    }
+  }
+
   for (const em of existingSchedule) {
     const emSlot = slotMap.get(em.timeSlotId)
     if (!emSlot) continue
@@ -173,6 +182,7 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
       teamTimeCounts,
       teamTotalMatchCounts,
       teamExpectedMatchCounts,
+      dayMatchCounts,
     }
 
     // Score remaining slots, pick lowest
@@ -218,6 +228,7 @@ export function generateGroupSchedule(input: ScheduleInput): ScheduleResult {
     }
 
     // Update all tracking maps
+    dayMatchCounts.set(bestSlot.date, (dayMatchCounts.get(bestSlot.date) ?? 0) + 1)
     for (const teamId of [match.teamAId, match.teamBId]) {
       incrementNestedCount(teamDayCounts, teamId, bestSlot.date)
       incrementNestedCount(teamGroundCounts, teamId, bestSlot.groundId)

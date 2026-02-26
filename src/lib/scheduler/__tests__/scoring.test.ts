@@ -50,6 +50,14 @@ describe("scoreSlot", () => {
 
   it("adds day load from occupancy", () => {
     const ctx = emptyContext()
+    ctx.dayMatchCounts = new Map([["2025-03-01", 2], ["2025-03-02", 1]])
+    // dayLoad = 2 matches on 2025-03-01
+    const score = scoreSlot(slot, match, ctx)
+    expect(score).toBe(2)
+  })
+
+  it("falls back to scanning occupancy when dayMatchCounts is not provided", () => {
+    const ctx = emptyContext()
     ctx.occupancy = new Map([
       [1, [30, 40]],
       [2, [50, 60]],
@@ -68,8 +76,7 @@ describe("scoreSlot", () => {
   it("combines clumping and day load penalties", () => {
     const ctx = emptyContext()
     ctx.teamDayCounts.set(10, new Map([["2025-03-01", 1]]))
-    ctx.occupancy = new Map([[1, [30, 40]]])
-    ctx.allSlots = [{ id: 1, date: "2025-03-01", groundId: 100, startTime: "08:00" }]
+    ctx.dayMatchCounts = new Map([["2025-03-01", 1]])
     // teamA: 1*10=10, teamB: 0, dayLoad: 1 → 11
     const score = scoreSlot(slot, match, ctx)
     expect(score).toBe(11)
