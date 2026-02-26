@@ -7,10 +7,7 @@ TAG="${1:-latest}"
 echo "==> Running tests..."
 npm test
 
-echo "==> Building Docker image: ${IMAGE}:${TAG}"
-docker build -t "${IMAGE}:${TAG}" .
-
-echo "==> Pushing to Docker Hub..."
-docker push "${IMAGE}:${TAG}"
+echo "==> Building Docker image for linux/amd64: ${IMAGE}:${TAG}"
+docker buildx build --platform linux/amd64 -t "${IMAGE}:${TAG}" --push .
 
 echo "==> Done. Published ${IMAGE}:${TAG}"
