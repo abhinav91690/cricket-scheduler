@@ -36,13 +36,11 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 # Copy drizzle SQL migration files for runtime migration
 COPY --from=builder /app/drizzle ./drizzle
-# Copy migration runner and entrypoint
+# Copy migration runner
 COPY --from=builder /app/migrate.js ./migrate.js
-COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
-RUN chmod +x entrypoint.sh
 
 USER nextjs
 
 EXPOSE 3000
 
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["sh", "-c", "node migrate.js && node server.js"]
